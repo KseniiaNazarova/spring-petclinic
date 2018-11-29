@@ -46,9 +46,14 @@ pipeline {
             }
         }
         stage('Release') {
+            environment {
+                GITHUB_CREDS = credentials('GitHub')
+            }
             steps {
                 junit 'target/surefire-reports/TEST-*.xml'
-                bat(/mvn release:prepare release:perform/)
+                withCredentials() {
+                    bat(/mvn release:prepare release:perform -Dusername=${GITHUB_CREDS_USR} -Dpassword=${GITHUB_CREDS_PSW}/)
+                }
             }
         }
         /*stage('Results') {
