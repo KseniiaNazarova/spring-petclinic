@@ -53,7 +53,7 @@ pipeline {
                 junit 'target/surefire-reports/TEST-*.xml'
                 withCredentials([usernameColonPassword(credentialsId: 'GitHub', variable: 'GITHUB_CREDS')]) {
                     bat(/git config user.email knazarova9@gmail.com && git config user.name Jenkins/)
-                    bat(/mvn release:prepare release:perform -Dusername=${GITHUB_CREDS_USR} -Dpassword=${GITHUB_CREDS_PSW} -Dmaven.javadoc.skip=true/)
+                    bat(/mvn release:prepare release:perform -Dusername=${GITHUB_CREDS_USR} -Dpassword=${GITHUB_CREDS_PSW} -Darguments="-Dmaven.javadoc.skip=true"/)
                 }
             }
         }
