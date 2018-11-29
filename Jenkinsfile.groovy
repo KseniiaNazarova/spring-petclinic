@@ -45,12 +45,18 @@ pipeline {
                 }
             }
         }
-        stage('Results') {
+        stage('Release') {
             steps {
-                junit '**/target/surefire-reports/TEST-*.xml'
-                archive 'target/*.jar'
+                junit 'target/surefire-reports/TEST-*.xml'
+                bat(/mvn release:prepare release:perform/)
             }
         }
+        /*stage('Results') {
+            steps {
+                junit 'target/surefire-reports/TEST-*.xml'
+                archiveArtifacts 'target/*.jar'
+            }
+        }*/
     }
     post {
         failure {
