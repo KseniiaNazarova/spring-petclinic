@@ -51,7 +51,7 @@ pipeline {
             }
             steps {
                 junit 'target/surefire-reports/TEST-*.xml'
-                withCredentials() {
+                withCredentials {
                     bat(/mvn release:prepare release:perform -Dusername=${GITHUB_CREDS_USR} -Dpassword=${GITHUB_CREDS_PSW}/)
                 }
             }
