@@ -48,12 +48,21 @@ pipeline {
         stage('Release') {
             environment {
                 GITHUB_CREDS = credentials('GitHub')
+                GITHUB_CONFIG = /git config user.email knazarova9@gmail.com && git config user.name Jenkins/
+                MVN_RELEASE_FORMAT = /mvn release:prepare release:perform -DreleaseVersion=%s -Dusername=%s -Dpassword=%s -Darguments="-Dmaven.javadoc.skip=true"/
             }
             steps {
                 junit 'target/surefire-reports/TEST-*.xml'
                 withCredentials([usernameColonPassword(credentialsId: 'GitHub', variable: 'GITHUB_CREDS')]) {
-                    bat(/git config user.email knazarova9@gmail.com && git config user.name Jenkins/)
-                    bat(/mvn release:prepare release:perform -DreleaseVersion=${currentBuild.displayName} -Dusername=${GITHUB_CREDS_USR} -Dpassword=${GITHUB_CREDS_PSW} -Darguments="-Dmaven.javadoc.skip=true"/)
+                    script {
+                        if (isUnix()) {
+                            sh(GITHUB_CONFIG)
+                            sh(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                        } else {
+                            bat(GITHUB_CONFIG)
+                            bat(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                        }
+                    }
                 }
             }
         }
