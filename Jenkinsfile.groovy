@@ -56,11 +56,8 @@ pipeline {
         stage('Release') {
             environment {
                 GITHUB_CREDS = credentials('GitHub')
-            }
-            parameters {
-                string(name: 'GITHUB_CONFIG', defaultValue: /git config user.email knazarova9@gmail.com && git config user.name Jenkins/, description: '')
-                string(name: 'GITHUB_CONFIG', defaultValue: /git config user.email knazarova9@gmail.com && git config user.name Jenkins/, description: '')
-                string(name: 'MVN_RELEASE_FORMAT', defaultValue: /mvn release:prepare release:perform -DreleaseVersion=%s -DdevelopmentVersion=%s -Dusername=%s -Dpassword=%s -Darguments="-Dmaven.javadoc.skip=true"/, description: '')
+                GITHUB_CONFIG = /git config user.email knazarova9@gmail.com && git config user.name Jenkins/
+                MVN_RELEASE_FORMAT = /mvn release:prepare release:perform -DreleaseVersion=%s -DdevelopmentVersion=%s -Dusername=%s -Dpassword=%s -Darguments="-Dmaven.javadoc.skip=true"/
             }
             steps {
                 junit 'target/surefire-reports/TEST-*.xml'
@@ -68,11 +65,11 @@ pipeline {
                     script {
                         String nextSnapshot = "${currentBuild.displayName}-SNAPSHOT"
                         if (isUnix()) {
-                            sh(params.GITHUB_CONFIG)
-                            sh(String.format(params.MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                            sh(GITHUB_CONFIG)
+                            sh(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
                         } else {
-                            bat(params.GITHUB_CONFIG)
-                            bat(String.format(params.MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                            bat(GITHUB_CONFIG)
+                            bat(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
                         }
                     }
                 }
