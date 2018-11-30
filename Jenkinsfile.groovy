@@ -7,7 +7,7 @@ pipeline {
         jdk 'JDK1.8'
     }
     triggers {
-        pollSCM('H * * * */5')
+        pollSCM('H H 1 1 *')
     }
     stages {
         stage('SCM') {
