@@ -17,6 +17,7 @@ pipeline {
         }
         stage('Build') {
             environment {
+                MVN_BUILD = /mvn -Dmaven.test.failure.ignore=false clean package/
                 BUILD_NAME = VersionNumber(projectStartDate: '2018-11-28',
                         versionNumberString: '${BUILD_DAY, XX}.${BUILD_MONTH, XX}.${BUILDS_THIS_YEAR, XXX}',
                         versionPrefix: 'v',
@@ -27,9 +28,9 @@ pipeline {
                 script {
                     currentBuild.displayName = "$BUILD_NAME"
                     if (isUnix()) {
-                        sh(/mvn -Dmaven.test.failure.ignore=false clean package/)
+                        sh(MVN_BUILD)
                     } else {
-                        bat(/mvn -Dmaven.test.failure.ignore=false clean package/)
+                        bat(MVN_BUILD)
                     }
                 }
             }
