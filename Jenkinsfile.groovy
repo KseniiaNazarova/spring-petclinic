@@ -24,12 +24,14 @@ pipeline {
                 )
             }
             steps {
-
                 script {
                     currentBuild.displayName = "$BUILD_NAME"
+                    if (isUnix()) {
+                        sh(/mvn -Dmaven.test.failure.ignore=false clean package/)
+                    } else {
+                        bat(/mvn -Dmaven.test.failure.ignore=false clean package/)
+                    }
                 }
-
-                bat(/mvn -Dmaven.test.failure.ignore=false clean package/)
             }
         }
         stage("SonarQube analysis") {
@@ -38,7 +40,11 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Sonar') {
-                    bat("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                    if (isUnix()) {
+                        sh("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                    } else {
+                        bat("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                    }
                 }
                 timeout(time: 1, unit: 'HOURS') {
                     waitForQualityGate abortPipeline: true
@@ -48,30 +54,28 @@ pipeline {
         stage('Release') {
             environment {
                 GITHUB_CREDS = credentials('GitHub')
-                GITHUB_CONFIG = /git config user.email knazarova9@gmail.com && git config user.name Jenkins/
-                MVN_RELEASE_FORMAT = /mvn release:prepare release:perform -DreleaseVersion=%s -Dusername=%s -Dpassword=%s -Darguments="-Dmaven.javadoc.skip=true"/
+            }
+            parameters {
+                string(name: 'GITHUB_CONFIG', defaultValue: /git config user.email knazarova9@gmail.com && git config user.name Jenkins/, description: '')
+                string(name: 'GITHUB_CONFIG', defaultValue: /git config user.email knazarova9@gmail.com && git config user.name Jenkins/, description: '')
+                string(name: 'MVN_RELEASE_FORMAT', defaultValue: /mvn release:prepare release:perform -DreleaseVersion=%s -DdevelopmentVersion=%s -Dusername=%s -Dpassword=%s -Darguments="-Dmaven.javadoc.skip=true"/, description: '')
             }
             steps {
                 junit 'target/surefire-reports/TEST-*.xml'
                 withCredentials([usernameColonPassword(credentialsId: 'GitHub', variable: 'GITHUB_CREDS')]) {
                     script {
+                        String nextSnapshot = "${currentBuild.displayName}-SNAPSHOT"
                         if (isUnix()) {
-                            sh(GITHUB_CONFIG)
-                            sh(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                            sh(params.GITHUB_CONFIG)
+                            sh(String.format(params.MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
                         } else {
-                            bat(GITHUB_CONFIG)
-                            bat(String.format(MVN_RELEASE_FORMAT, currentBuild.displayName, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
+                            bat(params.GITHUB_CONFIG)
+                            bat(String.format(params.MVN_RELEASE_FORMAT, currentBuild.displayName, nextSnapshot, GITHUB_CREDS_USR, GITHUB_CREDS_PSW))
                         }
                     }
                 }
             }
         }
-        /*stage('Results') {
-            steps {
-                junit 'target/surefire-reports/TEST-*.xml'
-                archiveArtifacts 'target/*.jar'
-            }
-        }*/
     }
     post {
         failure {
