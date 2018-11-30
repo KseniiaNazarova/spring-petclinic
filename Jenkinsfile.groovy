@@ -40,10 +40,12 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('Sonar') {
-                    if (isUnix()) {
-                        sh("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
-                    } else {
-                        bat("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                    script {
+                        if (isUnix()) {
+                            sh("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                        } else {
+                            bat("""${scannerHome}/bin/sonar-scanner -Dsonar.java.source-1.8 -Dsonar.java.binaries=target/classes/""")
+                        }
                     }
                 }
                 timeout(time: 1, unit: 'HOURS') {
